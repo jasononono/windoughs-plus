@@ -4,7 +4,7 @@ from importlib import util
 
 def dependency_check():
     try:
-        with open("requirement.py", 'r') as f:
+        with open("requirement.txt", 'r') as f:
             dependencies = f.read().split('\n')
 
         print("running dependency check...")
@@ -15,4 +15,4 @@ def dependency_check():
         print("dependency check completed.")
 
     except FileNotFoundError:
-        print(f"'requirement.py' not found. Skipping dependency check...")
+        print(f"'requirement.txt' not found. Skipping dependency check...")
