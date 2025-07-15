@@ -37,3 +37,14 @@ class Object:
 
     def collidepoint(self, position, absolute = True):
         return self.rect.abs.collidepoint(position) if absolute else self.rect.collidepoint(position)
+
+
+class Image:
+    def __init__(self, name):
+        self.name = name
+        self.surface = p.image.load(name)
+        self.size = self.surface.get_size()
+
+    def resize(self, size):
+        self.size = size
+        self.surface = p.transform.smoothscale(self.surface, size)

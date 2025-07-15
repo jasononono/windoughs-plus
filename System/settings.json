@@ -1,3 +1,7 @@
 {
-  "fps": 60
+  "version": "0.0.2",
+
+  "fps": 60,
+
+  "wallpaper": "System/Assets/wallpaperDefault.png"
 }

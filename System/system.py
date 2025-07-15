@@ -1,6 +1,7 @@
 import pygame as p
-import json
-from System.utility import Object
+
+from System.templates import Object, Image
+from System.settings import Settings, User
 
 
 class Event:
@@ -50,27 +51,38 @@ class Event:
         return self.detect(p.MOUSEBUTTONUP)
 
 
-class Settings:
-    def __init__(self):
-        with open("System/settings.json") as f:
-            self.data = json.load(f)
-
-        self.execute = True
-        self.title = "Windoughs"
-        self.cursor = p.SYSTEM_CURSOR_ARROW
-
-    def __getattr__(self, item):
-        return self.data[item]
-
-
-class Screen(Object):
+class System(Object):
     def __init__(self, size = (800, 600)):
         super().__init__()
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
+        self.rect.size = size
+
         self.event = Event()
+
         self.settings = Settings()
+        self.user = User()
+        self.user.load("user")
+
+        self.execute = True
+        self.title = "Windoughs " + self.settings.version
+        self.cursor = p.SYSTEM_CURSOR_ARROW
+
+        self.wallpaper = Image(self.settings.wallpaper)
+        self.load_wallpaper()
+
+    def resize(self, size):
+        self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
+        self.rect.size = size
+        self.load_wallpaper()
+
+    def load_wallpaper(self):
+        self.wallpaper = Image(self.user.wallpaper or self.settings.wallpaper)
+        factor = min(self.wallpaper.size[0] / self.rect.width, self.wallpaper.size[1] / self.rect.height)
+        self.wallpaper.resize([i / factor for i in self.wallpaper.size])
 
     def refresh(self):
         self.event.refresh()
         if self.event.detect(p.QUIT):
-            self.settings.execute = False
+            self.execute = False
+
+        self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])

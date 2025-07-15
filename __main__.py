@@ -3,17 +3,17 @@ requirement.dependency_check()
 
 
 import pygame as p
-from System.windoughs import Screen
+from System.system import System
 
 
-screen = Screen()
+system = System()
 clock = p.time.Clock()
 
-while screen.settings.execute:
-    clock.tick(screen.settings.fps)
-    screen.refresh()
+while system.execute:
+    clock.tick(system.settings.fps)
+    system.refresh()
 
-    p.display.set_caption(screen.settings.title)
-    p.mouse.set_cursor(screen.settings.cursor)
+    p.display.set_caption(system.title)
+    p.mouse.set_cursor(system.cursor)
     p.display.flip()
 p.quit()
