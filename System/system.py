@@ -2,6 +2,7 @@ import pygame as p
 
 from System.templates import Object, Image
 from System.settings import Settings, User
+from System.window import Window
 
 
 class Event:
@@ -70,6 +71,8 @@ class System(Object):
         self.wallpaper = Image(self.settings.wallpaper)
         self.load_wallpaper()
 
+        self.window = Window(self, position = (10, 10))
+
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
         self.rect.size = size
@@ -86,3 +89,4 @@ class System(Object):
             self.execute = False
 
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
+        self.window.refresh(self, self)

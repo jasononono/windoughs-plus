@@ -1,7 +1,9 @@
 {
   "version": "0.0.2",
 
-  "fps": 60,
+  "fps": 120,
+
+  "borderRadius": 15,
 
   "wallpaper": "System/Assets/wallpaperDefault.png"
 }
