@@ -71,7 +71,7 @@ class System(Object):
         self.wallpaper = Image(self.settings.wallpaper)
         self.load_wallpaper()
 
-        self.window = Window(self, position = (10, 10))
+        self.windows = []
 
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
@@ -83,10 +83,28 @@ class System(Object):
         factor = min(self.wallpaper.size[0] / self.rect.width, self.wallpaper.size[1] / self.rect.height)
         self.wallpaper.resize([i / factor for i in self.wallpaper.size])
 
+    def overlapping_window(self, position):
+        for i in self.windows:
+            if list(i.rect.topleft) == position:
+                return True
+        return False
+
+    def new_window(self, position = None, *args, **kwargs):
+        if position is None:
+            position = [0, 0]
+            while self.overlapping_window(position):
+                position[0] += 10
+                position[1] += 10
+                print(position)
+        self.windows.append(Window(self, position, *args, **kwargs))
+
     def refresh(self):
         self.event.refresh()
         if self.event.detect(p.QUIT):
             self.execute = False
+        if self.event.detect(p.KEYDOWN):
+            self.new_window()
 
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
-        self.window.refresh(self, self)
+        for i in self.windows:
+            i.refresh(self, self)

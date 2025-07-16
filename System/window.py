@@ -25,7 +25,7 @@ class TitleBar(Object):
 
 
 class Window(Object):
-    def __init__(self, system, size = (400, 300), position = (0, 0), title_bar_height = 32):
+    def __init__(self, system, position, size = (400, 300), title_bar_height = 32):
         super().__init__(position, size, True)
         self.corner_sequence = []
         self.get_corner_sequence(system.settings.borderRadius)
@@ -38,7 +38,7 @@ class Window(Object):
         self.fill(palette.light0)
 
         self.titleBar.refresh(system, self)
-        #self.draw_rect(palette.light4, (0, 0, self.rect.width, self.rect.height), 1)
+        self.draw_rect(palette.light3, (0, 0, self.rect.width, self.rect.height), 1)
         self.round_corners()
         parent.display(self.surface, self.rect)
 
@@ -47,20 +47,18 @@ class Window(Object):
         for i in range(radius):
             self.corner_sequence.append(round(radius - (radius ** 2 - (i + 1) ** 2) ** 0.5))
 
-    def antialias(self, pixel, center, radius, strength = 1):
+    def antialias(self, pixel, center, radius, strength = 2):
         distance = sum([(pixel[i] - center[i]) ** 2 for i in range(2)]) ** 0.5
-        alpha = (85 * radius + 255) * (distance - radius - strength) / -(radius + strength)
-        original = list(self.surface.get_at(pixel))
-        original[3] = min(255, max(0, alpha))
-        self.surface.set_at(pixel, original)
+        alpha = 255 - abs(255 * (distance - radius - strength) / strength + 255)
+        self.surface.set_at(pixel, list(palette.light3) + [min(255, max(0, alpha))])
 
     def round_corners(self):
         radius = len(self.corner_sequence)
+        width = self.rect.width - radius
         for i, n in enumerate(self.corner_sequence):
             for j in range(n):
-                width = self.rect.width - radius
                 height = self.rect.height - 1 - j
-                self.antialias((radius - i - 1, j), (radius - 1, radius - 1), radius)
-                self.antialias((width + i, j), (width, radius - 1), radius)
-                self.antialias((radius - i - 1, height), (radius - 1, self.rect.height - radius), radius)
-                self.antialias((width + i, height), (width, self.rect.height - radius), radius)
+                self.antialias((radius - i - 1, j), (radius, radius), radius)
+                self.antialias((width + i, j), (width - 1, radius), radius)
+                self.antialias((radius - i - 1, height), (radius, self.rect.height - radius - 1), radius)
+                self.antialias((width + i, height), (width - 1, self.rect.height - radius - 1), radius)
