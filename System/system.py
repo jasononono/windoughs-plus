@@ -91,12 +91,13 @@ class System(Object):
         return False
 
     def new_window(self, position = None, *args, **kwargs):
+        self.windows.append(Window(self, (0, 0), *args, **kwargs))
         if position is None:
-            position = [0, 0]
+            position = [self.rect.center[i] - self.windows[-1].rect.size[i] / 2 for i in range(2)]
             while self.overlapping_window(position):
-                position[0] += 10
-                position[1] += 10
-        self.windows.append(Window(self, position, *args, **kwargs))
+                position[0] += 20
+                position[1] += 20
+        self.windows[-1].rect.topleft = position
         self.active = self.windows[-1]
 
     def activate_window(self, window = None):
@@ -109,6 +110,7 @@ class System(Object):
 
     def refresh(self):
         self.event.refresh()
+        self.cursor = p.SYSTEM_CURSOR_ARROW
         if self.event.detect(p.QUIT):
             self.execute = False
         if self.event.detect(p.KEYDOWN):
@@ -120,7 +122,7 @@ class System(Object):
         bring_to_front = None
         for i in self.windows:
             i.refresh(self, self)
-            if mouse_down and i.collidepoint(self.event.mousePosition):
+            if mouse_down and (i.collidepoint(self.event.mousePosition) or i.resizing):
                 bring_to_front = i
         if mouse_down:
             self.activate_window(bring_to_front)
