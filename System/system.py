@@ -65,6 +65,7 @@ class System(Object):
         self.user.load("user")
 
         self.execute = True
+        self.active = None
         self.title = "Windoughs " + self.settings.version
         self.cursor = p.SYSTEM_CURSOR_ARROW
 
@@ -95,8 +96,16 @@ class System(Object):
             while self.overlapping_window(position):
                 position[0] += 10
                 position[1] += 10
-                print(position)
         self.windows.append(Window(self, position, *args, **kwargs))
+        self.active = self.windows[-1]
+
+    def activate_window(self, window = None):
+        if window:
+            self.active = window
+            self.windows.remove(window)
+            self.windows.append(window)
+        else:
+            self.active = None
 
     def refresh(self):
         self.event.refresh()
@@ -106,5 +115,12 @@ class System(Object):
             self.new_window()
 
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
+
+        mouse_down = self.event.mouse_down()
+        bring_to_front = None
         for i in self.windows:
             i.refresh(self, self)
+            if mouse_down and i.collidepoint(self.event.mousePosition):
+                bring_to_front = i
+        if mouse_down:
+            self.activate_window(bring_to_front)

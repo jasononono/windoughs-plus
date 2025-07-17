@@ -3,7 +3,7 @@
 
   "fps": 60,
 
-  "borderRadius": 15,
+  "borderRadius": 12,
 
   "wallpaper": "System/Assets/wallpaperDefault.png"
 }
