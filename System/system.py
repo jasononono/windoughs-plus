@@ -1,6 +1,7 @@
 import pygame as p
 
 from System.templates import Object, Image
+from System.Assets import palette
 from System.settings import Settings, User
 from System.window import Window
 
@@ -74,6 +75,8 @@ class System(Object):
 
         self.windows = []
 
+        self.font = p.font.SysFont("arial", 20)
+
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
         self.rect.size = size
@@ -103,11 +106,14 @@ class System(Object):
     def destroy_window(self, window):
         self.windows.remove(window)
         if self.active is window:
-            for i in self.windows[::-1]:
-                if not i.hidden:
-                    self.activate_window(i)
-                    return
-            self.active = None
+            self.activate_topmost_window()
+
+    def activate_topmost_window(self):
+        for i in self.windows[::-1]:
+            if not i.hidden:
+                self.activate_window(i)
+                return
+        self.active = None
 
     def activate_window(self, window = None):
         if window:
@@ -122,10 +128,18 @@ class System(Object):
         self.cursor = p.SYSTEM_CURSOR_ARROW
         if self.event.detect(p.QUIT):
             self.execute = False
-        if self.event.detect(p.KEYDOWN):
-            self.new_window()
 
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
+
+        ###
+        self.display(self.font.render("press W to summon a new window", True, palette.black), (10, 10))
+        self.display(self.font.render("press H to retrieve minimized windows", True, palette.black), (10, 40))
+        if self.event.key_down(p.K_w):
+            self.new_window()
+        if self.event.key_down(p.K_h):
+            for i in self.windows:
+                i.hidden = False
+        ###
 
         mouse_down = self.event.mouse_down()
         bring_to_front = None

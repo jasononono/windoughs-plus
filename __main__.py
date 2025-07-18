@@ -6,6 +6,9 @@ import pygame as p
 from System.system import System
 
 
+p.init()
+p.font.init()
+
 system = System()
 clock = p.time.Clock()
 
