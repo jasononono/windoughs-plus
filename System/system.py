@@ -86,7 +86,7 @@ class System(Object):
 
     def overlapping_window(self, position):
         for i in self.windows:
-            if list(i.rect.topleft) == position:
+            if not i.hidden and list(i.rect.topleft) == position:
                 return True
         return False
 
@@ -103,7 +103,11 @@ class System(Object):
     def destroy_window(self, window):
         self.windows.remove(window)
         if self.active is window:
-            self.active = self.windows[-1] if len(self.windows) > 0 else None
+            for i in self.windows[::-1]:
+                if not i.hidden:
+                    self.activate_window(i)
+                    return
+            self.active = None
 
     def activate_window(self, window = None):
         if window:
@@ -128,7 +132,8 @@ class System(Object):
         i = 0
         while i < len(self.windows):
             result = self.windows[i].refresh(self, self)
-            if mouse_down and (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing):
+            if (mouse_down and not self.windows[i].hidden and
+                (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
                 bring_to_front = self.windows[i]
             if not result:
                 i += 1

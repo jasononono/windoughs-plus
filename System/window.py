@@ -1,7 +1,8 @@
 import pygame as p
 
 from System.templates import Object
-from System.button import Button
+from System import icon
+from System.button import IconButton
 from System.Assets import palette
 
 
@@ -13,24 +14,41 @@ class TitleBar(Object):
         self.dragged = False
         self.dragOffset = (0, 0)
 
-        self.exit = Button((0, 0), (40, self.height),
-                           palette.light1, palette.red, palette.light2)
-        self.maximize = Button((0, 0), (40, self.height), palette.light1, palette.light2)
-        self.minimize = Button((0, 0), (40, self.height), palette.light1, palette.light2)
+        self.exit = IconButton((0, 0), (40, self.height), icon.x, (10, 10), 2,
+                               palette.light0, palette.red, palette.light1, icon_hover = palette.white, icon_active = palette.light3)
+        self.maximize = IconButton((0, 0), (40, self.height), icon.square, (10, 10), 1,
+                                   palette.light0, palette.light1)
+        self.minimize = IconButton((0, 0), (40, self.height), icon.hLine, (10, 10), 1,
+                                   palette.light0, palette.light1)
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
 
-        self.fill(palette.light1 if system.active is parent else palette.light2)
+        self.fill(palette.light0 if system.active is parent else palette.light1)
 
         self.exit.rect.topleft = (self.rect.width - 40, 0)
         self.maximize.rect.topleft = (self.rect.width - 80, 0)
         self.minimize.rect.topleft = (self.rect.width - 120, 0)
         self.exit.active = self.maximize.active = self.minimize.active = system.active is not parent
         self.exit.status = self.maximize.status = self.minimize.status = not self.exit.active
+
         result = self.exit.refresh(system, self)
-        self.maximize.refresh(system, self)
-        self.minimize.refresh(system, self)
+
+        if self.maximize.refresh(system, self):
+            if parent.rect.size == system.rect.size:
+                parent.resize(parent.restoredSize)
+                parent.rect.topleft = parent.restoredPosition
+                parent.rounded = True
+            else:
+                parent.restoredSize = (parent.rect.width, parent.rect.height - self.height)
+                parent.restoredPosition = parent.rect.topleft
+                parent.resize(system.rect.size, False)
+                parent.rect.topleft = (0, 0)
+                parent.rounded = False
+
+        if self.minimize.refresh(system, self):
+            parent.hidden = True
+            system.active = None
 
         parent.display(self.surface, self.rect)
 
@@ -50,8 +68,9 @@ class Content(Object):
     def __init__(self, position, size):
         super().__init__(position, size)
 
-    def refresh(self, system, parent):
+    def refresh(self, parent):
         self.rect.refresh(parent.rect)
+        parent.display(self.surface, self.rect)
 
 
 class Window(Object):
@@ -59,7 +78,8 @@ class Window(Object):
         super().__init__(position, (size[0], size[1] + title_height), True)
         self.corner_sequence = []
         self.get_corner_sequence(system.settings.borderRadius)
-        self.border_colour = palette.light3
+        self.border_colour = palette.light2
+        self.rounded = True
 
         self.titleBar = TitleBar((self.rect.width, title_height))
         self.content = Content((0, self.titleBar.height), size)
@@ -73,6 +93,10 @@ class Window(Object):
                                p.SYSTEM_CURSOR_SIZENS, p.SYSTEM_CURSOR_SIZENS,
                                p.SYSTEM_CURSOR_SIZENWSE, p.SYSTEM_CURSOR_SIZENESW,
                                p.SYSTEM_CURSOR_SIZENESW, p.SYSTEM_CURSOR_SIZENWSE]
+
+        self.restoredSize = size
+        self.restoredPosition = position
+        self.hidden = False
 
     def resize(self, size, content = True):
         size = list(size)
@@ -148,15 +172,20 @@ class Window(Object):
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
 
+        self.content.refresh(self)
+
+        if self.hidden:
+            return False
+
         if self.resizable:
             self.user_resize(system)
 
-        self.display(self.content.surface, self.content.rect)
         if self.titleBar.refresh(system, self):
             parent.destroy_window(self)
             return True
         self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
-        self.round_corners()
+        if self.rounded:
+            self.round_corners()
         parent.display(self.surface, self.rect)
         return False
 

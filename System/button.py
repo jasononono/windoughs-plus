@@ -1,19 +1,23 @@
 from System.templates import Object
+from System import icon
 from System.Assets import palette
 
 class Button(Object):
     def __init__(self, position, size,
-                 colour = palette.light2, hover_colour = None, active_colour = None, pressed_colour = None):
+                 colour = palette.light1, hover_colour = None, active_colour = None, pressed_colour = None):
         super().__init__(position, size)
         self.colour = colour
-        self.hoverColour = hover_colour or colour
-        self.activeColour = active_colour or hover_colour
-        self.pressedColour = pressed_colour or hover_colour
+        self.hoverColour = hover_colour or self.colour
+        self.activeColour = active_colour or self.hoverColour
+        self.pressedColour = pressed_colour or self.hoverColour
 
         self.status = True
         self.hover = False
         self.active = False
         self.pressed = False
+
+    def content(self, parent):
+        parent.display(self.surface, self.rect)
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
@@ -32,10 +36,38 @@ class Button(Object):
             self.fill(self.hoverColour)
         else:
             self.fill(self.colour)
-        parent.display(self.surface, self.rect)
+
+        self.content(parent)
 
         if system.event.mouse_up():
-            self.pressed = False
-            if self.status and self.hover:
+            if self.status and self.hover and self.pressed:
+                self.pressed = False
                 return True
+            self.pressed = False
         return False
+
+
+class IconButton(Button):
+    def __init__(self, position, size, instruction, icon_size, icon_width = 1,
+                 colour = palette.light1, hover_colour = None, active_colour = None, pressed_colour = None,
+                 icon_colour = palette.light3, icon_hover = None, icon_active = None, icon_pressed = None):
+        super().__init__(position, size, colour, hover_colour, active_colour, pressed_colour)
+        self.icon = icon.Icon(instruction, [(self.rect.size[i] - icon_size[i]) / 2 for i in range(2)],
+                              icon_size, icon_colour, icon_width)
+        self.iconColour = icon_colour
+        self.iconHover = icon_hover or self.iconColour
+        self.iconActive = icon_active or self.iconHover
+        self.iconPressed = icon_pressed or self.iconHover
+
+    def content(self, parent):
+        if self.status and self.pressed:
+            self.icon.colour = self.iconPressed
+        elif self.active:
+            self.icon.colour = self.iconActive
+        elif self.status and self.hover:
+            self.icon.colour = self.iconHover
+        else:
+            self.icon.colour = self.iconColour
+
+        self.icon.refresh(self)
+        parent.display(self.surface, self.rect)
