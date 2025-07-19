@@ -123,7 +123,8 @@ class Window(Object):
                 self.resize((self.resizeAnchor[0] - system.event.mousePosition[0] + self.resizeOffset[0],
                              self.rect.size[1]), False)
                 self.rect.left = min((system.event.mousePosition[0] - self.resizeOffset[0] -
-                                      (self.rect.abs.left - self.rect.left)), self.resizeAnchor[0] - self.minSize[0])
+                                      (self.rect.abs.left - self.rect.left)),
+                                     self.resizeAnchor[0] - self.minSize[0] - 2)
             elif self.resizing in [2, 6, 8]:
                 self.resize((system.event.mousePosition[0] - self.resizeOffset[0] - self.resizeAnchor[0],
                              self.rect.size[1]), False)
@@ -132,7 +133,7 @@ class Window(Object):
                              system.event.mousePosition[1] + self.resizeOffset[1]), False)
                 self.rect.top = min((system.event.mousePosition[1] - self.resizeOffset[1] -
                                      (self.rect.abs.top - self.rect.top)),
-                                    self.resizeAnchor[1] - self.minSize[1] - self.titleBar.height)
+                                    self.resizeAnchor[1] - self.minSize[1] - self.titleBar.height - 2)
             elif self.resizing in [4, 7, 8]:
                 self.resize((self.rect.size[0], system.event.mousePosition[1] - self.resizeOffset[1] -
                              self.resizeAnchor[1]), False)
