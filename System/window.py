@@ -9,7 +9,7 @@ from System.Assets import palette
 class TitleBar(Object):
     def __init__(self, size):
         self.height = size[1]
-        super().__init__((0, 0), size)
+        super().__init__((1, 1), size)
 
         self.dragged = False
         self.dragOffset = (0, 0)
@@ -75,15 +75,15 @@ class Content(Object):
 
 class Window(Object):
     def __init__(self, system, position, size = (400, 300), title_height = 32, resizable = True):
-        super().__init__(position, (size[0], size[1] + title_height), True)
-        self.corner_sequence = []
-        self.border_sequence = []
-        self.get_corner_sequence(system.settings.borderRadius)
-        self.border_colour = palette.red
+        super().__init__(position, (size[0] + 2, size[1] + title_height + 2), True)
+        self.border_colour = palette.light2
         self.rounded = True
+        self.aaStrength = 2
+        self.corner_sequence = []
+        self.get_corner_sequence(system.settings.borderRadius)
 
-        self.titleBar = TitleBar((self.rect.width, title_height))
-        self.content = Content((0, self.titleBar.height), size)
+        self.titleBar = TitleBar((self.rect.width - 2, title_height))
+        self.content = Content((1, self.titleBar.height + 1), size)
 
         self.minSize = [120, 50]
         self.resizable = resizable
@@ -104,15 +104,15 @@ class Window(Object):
         if content:
             size[0] = max(size[0], self.minSize[0])
             size[1] = max(size[1], self.minSize[1])
-            super().resize((size[0], size[1] + self.titleBar.height))
+            super().resize((size[0] + 2, size[1] + self.titleBar.height + 2))
             self.content.resize(size)
             self.titleBar.resize((size[0], self.titleBar.height))
         else:
-            size[0] = max(size[0], self.minSize[0])
-            size[1] = max(size[1], self.minSize[1] + self.titleBar.height)
+            size[0] = max(size[0], self.minSize[0] + 2)
+            size[1] = max(size[1], self.minSize[1] + self.titleBar.height + 2)
             super().resize(size)
-            self.content.resize((size[0], size[1] - self.titleBar.height))
-            self.titleBar.resize((size[0], self.titleBar.height))
+            self.content.resize((size[0] - 2, size[1] - self.titleBar.height - 2))
+            self.titleBar.resize((size[0] - 2, self.titleBar.height))
 
     def user_resize(self, system):
         if system.event.mouse_up():
@@ -132,7 +132,7 @@ class Window(Object):
                              system.event.mousePosition[1] + self.resizeOffset[1]), False)
                 self.rect.top = min((system.event.mousePosition[1] - self.resizeOffset[1] -
                                      (self.rect.abs.top - self.rect.top)),
-                                    self.resizeAnchor[1] -self.minSize[1] - self.titleBar.height)
+                                    self.resizeAnchor[1] - self.minSize[1] - self.titleBar.height)
             elif self.resizing in [4, 7, 8]:
                 self.resize((self.rect.size[0], system.event.mousePosition[1] - self.resizeOffset[1] -
                              self.resizeAnchor[1]), False)
@@ -171,22 +171,18 @@ class Window(Object):
                     self.resizeOffset[1] = system.event.mousePosition[1] - self.rect.abs.bottom
 
     def refresh(self, system, parent):
-        self.rect.refresh(parent.rect)
-
-        self.content.refresh(self)
-
         if self.hidden:
             return False
-
         if self.resizable:
             self.user_resize(system)
+
+        self.rect.refresh(parent.rect)
+        self.content.refresh(self)
 
         if self.titleBar.refresh(system, self):
             parent.destroy_window(self)
             return True
-
-        self.draw_borders(system, parent)
-
+        self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
         if self.rounded:
             self.round_corners()
         parent.display(self.surface, self.rect)
@@ -195,45 +191,28 @@ class Window(Object):
     def get_corner_sequence(self, radius = 0):
         self.corner_sequence = []
         for i in range(radius):
-            self.corner_sequence.append(round(radius - (radius ** 2 - (i + 1) ** 2) ** 0.5))
-        self.border_sequence = []
-        for i in range(radius + 1):
-            distance = round(radius + 1 - ((radius + 1) ** 2 - (i + 1) ** 2) ** 0.5)
-            self.border_sequence.append((distance, 1 - distance + (0 if i == radius else self.corner_sequence[i])))
-        for i in zip(self.corner_sequence, self.border_sequence):
-            print(i)
+            self.corner_sequence.append(radius if i >= radius - self.aaStrength else
+                                        round(radius - ((radius - self.aaStrength - i) *
+                                                        (radius - self.aaStrength + i)) ** 0.5))
 
-    def antialias(self, pixel, center, radius, strength = 2):
-        self.surface.set_at(center, (255, 0, 0))
+    def antialias(self, pixel, center, radius):
         distance = sum([(pixel[i] - center[i]) ** 2 for i in range(2)]) ** 0.5
-        alpha = 255 * (radius + strength - distance) / strength
-        original = self.surface.get_at(pixel)
-        original.a = round(max(0, min(255, alpha)))
-        self.surface.set_at(pixel, original)
+        if distance >= radius:
+            alpha = -255 * (distance - radius - self.aaStrength) / self.aaStrength
+            self.surface.set_at(pixel, list(self.border_colour) + [min(255, max(0, alpha))])
+        else:
+            alpha = (distance - radius + self.aaStrength / 2) / self.aaStrength * 2
+            alpha = min(1, max(0, alpha))
+            original = self.surface.get_at(pixel)
+            self.surface.set_at(pixel, [self.border_colour[i] * alpha + original[i] * (1 - alpha) for i in range(3)])
 
     def round_corners(self):
         radius = len(self.corner_sequence)
+        width = self.rect.width - radius
         for i, n in enumerate(self.corner_sequence):
             for j in range(n):
-                self.antialias((radius - i - 1, j),
-                               (radius, radius), radius)
-                self.antialias((self.rect.width - radius + i, j),
-                               (self.rect.width - radius - 1, radius), radius)
-                self.antialias((radius - i - 1, self.rect.height - j - 1),
-                               (radius, self.rect.height - radius), radius)
-                self.antialias((self.rect.width - radius + i, self.rect.height - j - 1),
-                               (self.rect.width - radius - 1, self.rect.height - radius), radius)
-
-    def draw_borders(self, system, parent):
-        parent.draw_rect(self.border_colour, (self.rect.left - 1, self.rect.top + system.settings.borderRadius,
-                                              self.rect.width + 2, self.rect.height - 2 * system.settings.borderRadius))
-        parent.draw_rect(self.border_colour, (self.rect.left + system.settings.borderRadius, self.rect.top - 1,
-                                              self.rect.width - 2 * system.settings.borderRadius, self.rect.height + 2))
-
-        radius = len(self.border_sequence)
-        for i, n in enumerate(self.border_sequence):
-            for j in range(n[1]):
-                parent.surface.set_at((self.rect.left+ radius - i - 1, self.rect.top+ j + n[0]), self.border_colour)
-                parent.surface.set_at((self.rect.left+ self.rect.width - radius + i, self.rect.top+ j + n[0]), self.border_colour)
-                parent.surface.set_at((self.rect.left+ radius - i - 1, self.rect.top+ self.rect.height - j - 1 - n[0]), self.border_colour)
-                parent.surface.set_at((self.rect.left+ self.rect.width - radius + i, self.rect.top+ self.rect.height - j - 1 - n[0]), self.border_colour)
+                height = self.rect.height - 1 - j
+                self.antialias((radius - i - 1, j), (radius, radius), radius)
+                self.antialias((width + i, j), (width - 1, radius), radius)
+                self.antialias((radius - i - 1, height), (radius, self.rect.height - radius - 1), radius)
+                self.antialias((width + i, height), (width - 1, self.rect.height - radius - 1), radius)
