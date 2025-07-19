@@ -77,8 +77,9 @@ class Window(Object):
     def __init__(self, system, position, size = (400, 300), title_height = 32, resizable = True):
         super().__init__(position, (size[0], size[1] + title_height), True)
         self.corner_sequence = []
+        self.border_sequence = []
         self.get_corner_sequence(system.settings.borderRadius)
-        self.border_colour = palette.light2
+        self.border_colour = palette.red
         self.rounded = True
 
         self.titleBar = TitleBar((self.rect.width, title_height))
@@ -183,7 +184,9 @@ class Window(Object):
         if self.titleBar.refresh(system, self):
             parent.destroy_window(self)
             return True
-        self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
+
+        self.draw_borders(system, parent)
+
         if self.rounded:
             self.round_corners()
         parent.display(self.surface, self.rect)
@@ -193,19 +196,44 @@ class Window(Object):
         self.corner_sequence = []
         for i in range(radius):
             self.corner_sequence.append(round(radius - (radius ** 2 - (i + 1) ** 2) ** 0.5))
+        self.border_sequence = []
+        for i in range(radius + 1):
+            distance = round(radius + 1 - ((radius + 1) ** 2 - (i + 1) ** 2) ** 0.5)
+            self.border_sequence.append((distance, 1 - distance + (0 if i == radius else self.corner_sequence[i])))
+        for i in zip(self.corner_sequence, self.border_sequence):
+            print(i)
 
-    def antialias(self, pixel, center, radius, strength = 3):
+    def antialias(self, pixel, center, radius, strength = 2):
+        self.surface.set_at(center, (255, 0, 0))
         distance = sum([(pixel[i] - center[i]) ** 2 for i in range(2)]) ** 0.5
-        alpha = 255 - (255 * (distance - radius - strength) / strength + 255)
-        self.surface.set_at(pixel, list(self.border_colour) + [min(255, max(0, alpha))])
+        alpha = 255 * (radius + strength - distance) / strength
+        original = self.surface.get_at(pixel)
+        original.a = round(max(0, min(255, alpha)))
+        self.surface.set_at(pixel, original)
 
     def round_corners(self):
         radius = len(self.corner_sequence)
-        width = self.rect.width - radius
         for i, n in enumerate(self.corner_sequence):
             for j in range(n):
-                height = self.rect.height - 1 - j
-                self.antialias((radius - i - 1, j), (radius, radius), radius)
-                self.antialias((width + i, j), (width - 1, radius), radius)
-                self.antialias((radius - i - 1, height), (radius, self.rect.height - radius - 1), radius)
-                self.antialias((width + i, height), (width - 1, self.rect.height - radius - 1), radius)
+                self.antialias((radius - i - 1, j),
+                               (radius, radius), radius)
+                self.antialias((self.rect.width - radius + i, j),
+                               (self.rect.width - radius - 1, radius), radius)
+                self.antialias((radius - i - 1, self.rect.height - j - 1),
+                               (radius, self.rect.height - radius), radius)
+                self.antialias((self.rect.width - radius + i, self.rect.height - j - 1),
+                               (self.rect.width - radius - 1, self.rect.height - radius), radius)
+
+    def draw_borders(self, system, parent):
+        parent.draw_rect(self.border_colour, (self.rect.left - 1, self.rect.top + system.settings.borderRadius,
+                                              self.rect.width + 2, self.rect.height - 2 * system.settings.borderRadius))
+        parent.draw_rect(self.border_colour, (self.rect.left + system.settings.borderRadius, self.rect.top - 1,
+                                              self.rect.width - 2 * system.settings.borderRadius, self.rect.height + 2))
+
+        radius = len(self.border_sequence)
+        for i, n in enumerate(self.border_sequence):
+            for j in range(n[1]):
+                parent.surface.set_at((self.rect.left+ radius - i - 1, self.rect.top+ j + n[0]), self.border_colour)
+                parent.surface.set_at((self.rect.left+ self.rect.width - radius + i, self.rect.top+ j + n[0]), self.border_colour)
+                parent.surface.set_at((self.rect.left+ radius - i - 1, self.rect.top+ self.rect.height - j - 1 - n[0]), self.border_colour)
+                parent.surface.set_at((self.rect.left+ self.rect.width - radius + i, self.rect.top+ self.rect.height - j - 1 - n[0]), self.border_colour)

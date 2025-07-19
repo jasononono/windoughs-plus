@@ -1,4 +1,5 @@
 import pygame as p
+from pygame import gfxdraw
 
 
 class Rect(p.Rect):
@@ -28,6 +29,12 @@ class Object:
 
     def draw_rect(self, *args, **kwargs):
         p.draw.rect(self.surface, *args, **kwargs)
+
+    def draw_circle(self, *args, **kwargs):
+        p.draw.circle(self.surface, *args, **kwargs)
+
+    def draw_aacircle(self, *args, **kwargs):
+        gfxdraw.aacircle(self.surface, *args, **kwargs)
 
     def draw_line(self, *args, **kwargs):
         p.draw.line(self.surface, *args, **kwargs)
