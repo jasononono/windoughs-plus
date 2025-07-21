@@ -24,9 +24,9 @@ class TitleBar(Object):
                                palette.light0, palette.red, palette.light1,
                                icon_hover = palette.white, icon_active = palette.light4)
         self.maximize = IconButton((0, 0), (40, self.height), icon.square, (10, 10), 1,
-                                   palette.light0, palette.light1)
+                                   palette.light0, palette.light2, palette.light1)
         self.minimize = IconButton((0, 0), (40, self.height), icon.hLine, (10, 10), 1,
-                                   palette.light0, palette.light1)
+                                   palette.light0, palette.light2, palette.light1)
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
@@ -39,6 +39,9 @@ class TitleBar(Object):
         self.title.foreground = palette.light4 if system.active is parent else palette.light3
         self.title.text = parent.title
         self.display(self.title.render(), (40, (self.height - self.title.size[1]) / 2.1))
+
+        self.draw_rect(palette.light0 if system.active is parent else palette.light1,
+                       (self.rect.width - 132, 0, 12, self.height))
 
         self.exit.rect.topleft = (self.rect.width - 40, 0)
         self.maximize.rect.topleft = (self.rect.width - 80, 0)
@@ -100,7 +103,7 @@ class Window(Object):
         self.titleBar = TitleBar((self.rect.width - 2, title_height))
         self.content = Content((1, self.titleBar.height + 1), size)
 
-        self.minSize = [120, 50]
+        self.minSize = [132, 50]
         self.resizable = resizable
         self.resizing = 0
         self.resizeOffset = [0, 0]
@@ -196,12 +199,13 @@ class Window(Object):
         if self.resizable:
             self.user_resize(system)
 
-        self.rect.refresh(parent.rect)
-        self.content.refresh(self)
-
         if self.titleBar.refresh(system, self):
             parent.destroy_window(self)
             return True
+
+        self.rect.refresh(parent.rect)
+        self.content.refresh(self)
+
         self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
         if not self.snapped:
             self.round_corners()
