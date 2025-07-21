@@ -33,3 +33,6 @@ class User:
     def write(self):
         with open("Storage/User/" + self.name + "/settings.json", 'w') as f:
             json.dump(self.data, f)
+
+settings = Settings()
+user = User()

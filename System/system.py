@@ -2,7 +2,7 @@ import pygame as p
 
 from System.templates import Object, Image
 from System.Assets import palette
-from System.settings import Settings, User
+from System.settings import settings, user
 from System.window import Window
 
 
@@ -61,16 +61,14 @@ class System(Object):
 
         self.event = Event()
 
-        self.settings = Settings()
-        self.user = User()
-        self.user.load("user")
+        user.load("user")
 
         self.execute = True
         self.active = None
-        self.title = "Windoughs " + self.settings.version
+        self.title = "Windoughs " + settings.version
         self.cursor = p.SYSTEM_CURSOR_ARROW
 
-        self.wallpaper = Image(self.settings.wallpaper)
+        self.wallpaper = Image(settings.wallpaper)
         self.load_wallpaper()
 
         self.windows = []
@@ -83,7 +81,7 @@ class System(Object):
         self.load_wallpaper()
 
     def load_wallpaper(self):
-        self.wallpaper = Image(self.user.wallpaper or self.settings.wallpaper)
+        self.wallpaper = Image(user.wallpaper or settings.wallpaper)
         factor = min(self.wallpaper.size[0] / self.rect.width, self.wallpaper.size[1] / self.rect.height)
         self.wallpaper.resize([i / factor for i in self.wallpaper.size])
 
@@ -94,7 +92,7 @@ class System(Object):
         return False
 
     def new_window(self, position = None, *args, **kwargs):
-        self.windows.append(Window(self, (0, 0), *args, **kwargs))
+        self.windows.append(Window((0, 0), *args, **kwargs))
         if position is None:
             position = [self.rect.center[i] - self.windows[-1].rect.size[i] / 2 for i in range(2)]
             while self.overlapping_window(position):

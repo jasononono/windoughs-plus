@@ -1,5 +1,4 @@
-import pygame as p
-from System.templates import Object
+from System.templates import Model
 from System.Assets import palette
 
 
@@ -11,21 +10,21 @@ class Instruction:
         self.template.append((command, args, kwargs))
 
 
-class Icon(Object):
-    def __init__(self, instruction, position = (0, 0), size = (0, 0), colour = palette.white, width = 1):
-        super().__init__(position, size, p.SRCALPHA)
+class Icon(Model):
+    def __init__(self, instruction, size = (0, 0), colour = palette.white, width = 1):
+        super().__init__(size, True, ("size", "instruction", "colour", "width"))
         self.instruction = instruction
         self.colour = colour
         self.width = width
+        self.auto = True
 
-    def refresh(self, parent):
+    def update(self):
         self.fill(palette.alpha)
         for i in self.instruction.template:
             i[0](self, *i[1], **i[2])
-        parent.display(self.surface, self.rect)
 
     def to_location(self, position):
-        return [position[i] * (self.rect.width - (1 if self.width % 2 else 2)) for i in range(2)]
+        return [position[i] * (self.size[i] - (1 if self.width % 2 else 2)) for i in range(2)]
 
     def draw_line(self, start, end):
         super().draw_line(self.colour, self.to_location(start), self.to_location(end), self.width)

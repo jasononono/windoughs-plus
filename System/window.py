@@ -1,8 +1,10 @@
 import pygame as p
 
-from System.templates import Object
+from System.templates import Object, Image
+from System.settings import settings
 from System import icon
 from System.button import IconButton
+from System.TextEngine.text import Label
 from System.Assets import palette
 
 
@@ -14,8 +16,13 @@ class TitleBar(Object):
         self.dragged = False
         self.dragOffset = (0, 0)
 
+        self.icon = Image("System/Assets/iconDefault.png")
+        self.icon.resize((16, 16))
+        self.title = Label(font_size = 13)
+
         self.exit = IconButton((0, 0), (40, self.height), icon.x, (10, 10), 2,
-                               palette.light0, palette.red, palette.light1, icon_hover = palette.white, icon_active = palette.light3)
+                               palette.light0, palette.red, palette.light1,
+                               icon_hover = palette.white, icon_active = palette.light4)
         self.maximize = IconButton((0, 0), (40, self.height), icon.square, (10, 10), 1,
                                    palette.light0, palette.light1)
         self.minimize = IconButton((0, 0), (40, self.height), icon.hLine, (10, 10), 1,
@@ -25,6 +32,13 @@ class TitleBar(Object):
         self.rect.refresh(parent.rect)
 
         self.fill(palette.light0 if system.active is parent else palette.light1)
+
+        if self.rect.width > 148:
+            self.display(self.icon.surface, (12, (self.height - self.icon.size[1]) / 2))
+
+        self.title.foreground = palette.light4 if system.active is parent else palette.light3
+        self.title.text = parent.title
+        self.display(self.title.surface, (40, (self.height - self.title.size[1]) / 2.1))
 
         self.exit.rect.topleft = (self.rect.width - 40, 0)
         self.maximize.rect.topleft = (self.rect.width - 80, 0)
@@ -38,13 +52,13 @@ class TitleBar(Object):
             if parent.rect.size == system.rect.size:
                 parent.resize(parent.restoredSize)
                 parent.rect.topleft = parent.restoredPosition
-                parent.rounded = True
+                parent.snapped = False
             else:
                 parent.restoredSize = (parent.rect.width, parent.rect.height - self.height)
                 parent.restoredPosition = parent.rect.topleft
-                parent.resize(system.rect.size, False)
-                parent.rect.topleft = (0, 0)
-                parent.rounded = False
+                parent.resize([i + 2 for i in system.rect.size], False)
+                parent.rect.topleft = (-1, -1)
+                parent.snapped = True
 
         if self.minimize.refresh(system, self):
             parent.hidden = True
@@ -60,6 +74,7 @@ class TitleBar(Object):
             self.dragged = False
         if system.active is parent and self.dragged:
             parent.rect.topleft = [system.event.mousePosition[i] - self.dragOffset[i] for i in range(2)]
+            parent.snapped = False
 
         return result
 
@@ -74,14 +89,14 @@ class Content(Object):
 
 
 class Window(Object):
-    def __init__(self, system, position, size = (400, 300), title_height = 32, resizable = True):
+    def __init__(self, position, size = (400, 300), title = "New Window", title_height = 32, resizable = True):
         super().__init__(position, (size[0] + 2, size[1] + title_height + 2), True)
         self.border_colour = palette.light2
-        self.rounded = True
         self.aaStrength = 2
         self.corner_sequence = []
-        self.get_corner_sequence(system.settings.borderRadius)
+        self.get_corner_sequence(settings.borderRadius)
 
+        self.title = title
         self.titleBar = TitleBar((self.rect.width - 2, title_height))
         self.content = Content((1, self.titleBar.height + 1), size)
 
@@ -98,6 +113,7 @@ class Window(Object):
         self.restoredSize = size
         self.restoredPosition = position
         self.hidden = False
+        self.snapped = False
 
     def resize(self, size, content = True):
         size = list(size)
@@ -137,6 +153,9 @@ class Window(Object):
             elif self.resizing in [4, 7, 8]:
                 self.resize((self.rect.size[0], system.event.mousePosition[1] - self.resizeOffset[1] -
                              self.resizeAnchor[1]), False)
+            if self.snapped and (self.rect.left != -1 and self.rect.right != system.rect.width + 1 and
+                self.rect.top != -1 and self.rect.bottom != system.rect.height + 1):
+                self.snapped = False
             return
 
         if self.titleBar.exit.hover or self.titleBar.maximize.hover or self.titleBar.minimize.hover:
@@ -184,7 +203,7 @@ class Window(Object):
             parent.destroy_window(self)
             return True
         self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
-        if self.rounded:
+        if not self.snapped:
             self.round_corners()
         parent.display(self.surface, self.rect)
         return False

@@ -50,9 +50,9 @@ class Button(Object):
 class IconButton(Button):
     def __init__(self, position, size, instruction, icon_size, icon_width = 1,
                  colour = palette.light1, hover_colour = None, active_colour = None, pressed_colour = None,
-                 icon_colour = palette.light3, icon_hover = None, icon_active = None, icon_pressed = None):
+                 icon_colour = palette.light4, icon_hover = None, icon_active = None, icon_pressed = None):
         super().__init__(position, size, colour, hover_colour, active_colour, pressed_colour)
-        self.icon = icon.Icon(instruction, [(self.rect.size[i] - icon_size[i]) / 2 for i in range(2)],
+        self.icon = icon.Icon(instruction,
                               icon_size, icon_colour, icon_width)
         self.iconColour = icon_colour
         self.iconHover = icon_hover or self.iconColour
@@ -69,5 +69,5 @@ class IconButton(Button):
         else:
             self.icon.colour = self.iconColour
 
-        self.icon.refresh(self)
+        self.display(self.icon.surface, [(self.rect.size[i] - self.icon.size[i]) / 2 for i in range(2)])
         parent.display(self.surface, self.rect)

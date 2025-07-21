@@ -3,6 +3,7 @@ requirement.dependency_check()
 
 
 import pygame as p
+from System.settings import settings
 from System.system import System
 
 
@@ -13,7 +14,7 @@ system = System()
 clock = p.time.Clock()
 
 while system.execute:
-    clock.tick(system.settings.fps)
+    clock.tick(settings.fps)
     system.refresh()
 
     p.display.set_caption(system.title)
