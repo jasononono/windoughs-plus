@@ -14,6 +14,7 @@ class Rect(p.Rect):
 class Template:
     def __init__(self, size = (0, 0), alpha = False):
         self.surface = p.Surface(size, p.SRCALPHA) if alpha else p.Surface(size)
+        self.alpha = alpha
 
     def fill(self, *colour):
         self.surface.fill(colour)
@@ -37,6 +38,7 @@ class Template:
 class Model(Template):
     def __init__(self, size = (0, 0), alpha = False, auto_refresh = tuple("size")):
         self.auto = False
+        self.pendingRefresh = False
         self.autoRefresh = auto_refresh
 
         super().__init__(size, alpha)
@@ -49,14 +51,15 @@ class Model(Template):
         if key != "auto" and not self.auto:
             return
         if key in self.autoRefresh:
-            self.update()
+            self.pendingRefresh = True
 
-    def update(self):
-        return
+    def refresh(self):
+        self.surface = p.Surface(self.size, p.SRCALPHA) if self.alpha else p.Surface(self.size)
 
-    def resize(self, size):
-        self.surface = p.transform.scale(self.surface, size)
-        self.size = size
+    def render(self):
+        if self.pendingRefresh:
+            self.refresh()
+        return self.surface
 
 
 class Object(Template):

@@ -25,16 +25,17 @@ class Label(Model):
     def resize(self, size = None):
         self.maxSize = size
 
-    def update(self):
+    def refresh(self):
         self.font = Font(self.fontSize, self.fontName, self.bold, self.italic, self.foreground, self.background)
         if self.maxSize:
-            super().resize(self.maxSize)
+            self.size = self.maxSize
         else:
             pointer = 0
             for i in self.text:
                 pointer += self.font.glyphs[i]
-            super().resize((pointer, self.font.height))
+            self.size = pointer, self.font.height
 
+        super().refresh()
         self.fill(self.background or palette.alpha)
         pointer = 0
         for i in self.text:

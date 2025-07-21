@@ -38,7 +38,7 @@ class TitleBar(Object):
 
         self.title.foreground = palette.light4 if system.active is parent else palette.light3
         self.title.text = parent.title
-        self.display(self.title.surface, (40, (self.height - self.title.size[1]) / 2.1))
+        self.display(self.title.render(), (40, (self.height - self.title.size[1]) / 2.1))
 
         self.exit.rect.topleft = (self.rect.width - 40, 0)
         self.maximize.rect.topleft = (self.rect.width - 80, 0)
@@ -49,7 +49,7 @@ class TitleBar(Object):
         result = self.exit.refresh(system, self)
 
         if self.maximize.refresh(system, self):
-            if parent.rect.size == system.rect.size:
+            if parent.snapped:
                 parent.resize(parent.restoredSize)
                 parent.rect.topleft = parent.restoredPosition
                 parent.snapped = False

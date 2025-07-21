@@ -69,5 +69,5 @@ class IconButton(Button):
         else:
             self.icon.colour = self.iconColour
 
-        self.display(self.icon.surface, [(self.rect.size[i] - self.icon.size[i]) / 2 for i in range(2)])
+        self.display(self.icon.render(), [(self.rect.size[i] - self.icon.size[i]) / 2 for i in range(2)])
         parent.display(self.surface, self.rect)

@@ -18,7 +18,8 @@ class Icon(Model):
         self.width = width
         self.auto = True
 
-    def update(self):
+    def refresh(self):
+        super().refresh()
         self.fill(palette.alpha)
         for i in self.instruction.template:
             i[0](self, *i[1], **i[2])
