@@ -1,9 +1,10 @@
 import pygame as p
 
 from System.templates import Object, Image
-from System.Assets import palette
 from System.settings import settings, user
 from System.window import Window
+
+from System.dough import linker
 
 
 class Event:
@@ -73,7 +74,11 @@ class System(Object):
 
         self.windows = []
 
-        self.font = p.font.SysFont("arial", 20)
+        linker.system = self
+        linker.settings = settings
+        linker.user = user
+
+        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
 
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
@@ -100,6 +105,8 @@ class System(Object):
                 position[1] += 20
         self.windows[-1].rect.topleft = position
         self.active = self.windows[-1]
+
+        return self.windows[-1]
 
     def destroy_window(self, window):
         self.windows.remove(window)
@@ -130,13 +137,13 @@ class System(Object):
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
 
         ###
-        self.display(self.font.render("press W to summon a new window", True, palette.black), (10, 10))
-        self.display(self.font.render("press H to retrieve minimized windows", True, palette.black), (10, 40))
-        if self.event.key_down(p.K_w):
-            self.new_window()
-        if self.event.key_down(p.K_h):
-            for i in self.windows:
-                i.hidden = False
+        # self.display(self.font.render("press W to summon a new window", True, palette.black), (10, 10))
+        # self.display(self.font.render("press H to retrieve minimized windows", True, palette.black), (10, 40))
+        # if self.event.key_down(p.K_w):
+        #     self.new_window()
+        # if self.event.key_down(p.K_h):
+        #     for i in self.windows:
+        #         i.hidden = False
         ###
 
         mouse_down = self.event.mouse_down()
@@ -144,10 +151,10 @@ class System(Object):
         i = 0
         while i < len(self.windows):
             result = self.windows[i].refresh(self, self)
-            if (mouse_down and not self.windows[i].hidden and
-                (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
-                bring_to_front = self.windows[i]
             if not result:
+                if (mouse_down and not self.windows[i].hidden and
+                    (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
+                    bring_to_front = self.windows[i]
                 i += 1
         if mouse_down:
             self.activate_window(bring_to_front)

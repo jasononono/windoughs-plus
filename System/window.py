@@ -85,6 +85,7 @@ class TitleBar(Object):
 class Content(Object):
     def __init__(self, position, size):
         super().__init__(position, size)
+        self.canvas = p.Surface(size)
 
     def refresh(self, parent):
         self.rect.refresh(parent.rect)
