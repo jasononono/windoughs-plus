@@ -4,7 +4,7 @@ from System.templates import Object, Image
 from System.settings import settings, user
 from System.window import Window
 
-from System.dough import linker
+from System.dough import linker, control
 
 
 class Event:
@@ -118,14 +118,18 @@ class System(Object):
             if not i.hidden:
                 self.activate_window(i)
                 return
-        self.active = None
+        self.activate_window()
 
     def activate_window(self, window = None):
         if window:
+            if self.active is not window:
+                window.events.append(control.Event(control.ACTIVE))
             self.active = window
             self.windows.remove(window)
             self.windows.append(window)
         else:
+            if self.active:
+                self.active.events.append(control.Event(control.INACTIVE))
             self.active = None
 
     def refresh(self):
@@ -146,15 +150,16 @@ class System(Object):
         #         i.hidden = False
         ###
 
+        linker.refresh()
+
         mouse_down = self.event.mouse_down()
         bring_to_front = None
         i = 0
         while i < len(self.windows):
-            result = self.windows[i].refresh(self, self)
-            if not result:
-                if (mouse_down and not self.windows[i].hidden and
-                    (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
-                    bring_to_front = self.windows[i]
-                i += 1
+            self.windows[i].refresh(self, self)
+            if (mouse_down and not self.windows[i].hidden and
+                (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
+                bring_to_front = self.windows[i]
+            i += 1
         if mouse_down:
             self.activate_window(bring_to_front)

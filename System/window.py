@@ -6,6 +6,7 @@ from System import icon
 from System.button import IconButton
 from System.TextEngine.text import Label
 from System.Assets import palette
+from System.dough import control
 
 
 class TitleBar(Object):
@@ -49,23 +50,27 @@ class TitleBar(Object):
         self.exit.active = self.maximize.active = self.minimize.active = system.active is not parent
         self.exit.status = self.maximize.status = self.minimize.status = not self.exit.active
 
-        result = self.exit.refresh(system, self)
+        if self.exit.refresh(system, self):
+            parent.events.append(control.Event(control.QUIT))
 
         if self.maximize.refresh(system, self):
             if parent.snapped:
                 parent.resize(parent.restoredSize)
                 parent.rect.topleft = parent.restoredPosition
                 parent.snapped = False
+                parent.events.append(control.Event(control.MINIMIZE))
             else:
                 parent.restoredSize = (parent.rect.width, parent.rect.height - self.height)
                 parent.restoredPosition = parent.rect.topleft
                 parent.resize([i + 2 for i in system.rect.size], False)
                 parent.rect.topleft = (-1, -1)
                 parent.snapped = True
+                parent.events.append(control.Event(control.MAXIMIZE))
 
         if self.minimize.refresh(system, self):
             parent.hidden = True
             system.active = None
+            parent.events.append(control.Event(control.HIDDEN))
 
         parent.display(self.surface, self.rect)
 
@@ -78,8 +83,7 @@ class TitleBar(Object):
         if system.active is parent and self.dragged:
             parent.rect.topleft = [system.event.mousePosition[i] - self.dragOffset[i] for i in range(2)]
             parent.snapped = False
-
-        return result
+            parent.events.append(control.Event(control.MOTION))
 
 
 class Content(Object):
@@ -118,6 +122,8 @@ class Window(Object):
         self.restoredPosition = position
         self.hidden = False
         self.snapped = False
+
+        self.events = []
 
     def resize(self, size, content = True):
         size = list(size)
@@ -160,6 +166,8 @@ class Window(Object):
             if self.snapped and (self.rect.left != -1 and self.rect.right != system.rect.width + 1 and
                 self.rect.top != -1 and self.rect.bottom != system.rect.height + 1):
                 self.snapped = False
+
+            self.events.append(control.Event(control.RESIZE))
             return
 
         if self.titleBar.exit.hover or self.titleBar.maximize.hover or self.titleBar.minimize.hover:
@@ -194,24 +202,41 @@ class Window(Object):
                     self.resizeAnchor[1] = self.rect.abs.top
                     self.resizeOffset[1] = system.event.mousePosition[1] - self.rect.abs.bottom
 
+    def refresh_events(self, system):
+        self.events = []
+        mouse = self.content.collidepoint(system.event.mousePosition)
+        for e in system.event.event:
+            if system.active is self:
+                if e.type == p.KEYDOWN:
+                    self.events.append(control.Event(control.KEYDOWN))
+                if e.type == p.KEYUP:
+                    self.events.append(control.Event(control.KEYUP))
+            if mouse and not self.hidden:
+                if e.type == p.MOUSEBUTTONUP:
+                    self.events.append(control.Event(control.MOUSEBUTTONUP))
+                if e.type == p.MOUSEBUTTONDOWN:
+                    self.events.append(control.Event(control.MOUSEBUTTONDOWN))
+
+            ### p.MOUSEMOTION currently unincluded ###
+
     def refresh(self, system, parent):
+        self.rect.refresh(parent.rect)
+        self.refresh_events(system)
+
         if self.hidden:
-            return False
+            return
         if self.resizable:
             self.user_resize(system)
 
-        if self.titleBar.refresh(system, self):
-            parent.destroy_window(self)
-            return True
+        self.titleBar.refresh(system, self)
 
-        self.rect.refresh(parent.rect)
         self.content.refresh(self)
 
         self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
         if not self.snapped:
             self.round_corners()
         parent.display(self.surface, self.rect)
-        return False
+        return
 
     def get_corner_sequence(self, radius = 0):
         self.corner_sequence = []
