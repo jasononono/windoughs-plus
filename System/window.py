@@ -49,6 +49,8 @@ class TitleBar(Object):
         self.minimize.rect.topleft = (self.rect.width - 120, 0)
         self.exit.active = self.maximize.active = self.minimize.active = system.active is not parent
         self.exit.status = self.maximize.status = self.minimize.status = not self.exit.active
+        self.maximize.status = parent.resizable and self.maximize.status
+        self.maximize.active = not self.maximize.status
 
         if self.exit.refresh(system, self):
             parent.events.append(control.Event(control.QUIT))
@@ -235,6 +237,7 @@ class Window(Object):
         self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
         if not self.snapped:
             self.round_corners()
+
         parent.display(self.surface, self.rect)
         return
 

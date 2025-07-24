@@ -78,8 +78,6 @@ class System(Object):
         linker.settings = settings
         linker.user = user
 
-        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
-
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
         self.rect.size = size
@@ -140,15 +138,8 @@ class System(Object):
 
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
 
-        ###
-        # self.display(self.font.render("press W to summon a new window", True, palette.black), (10, 10))
-        # self.display(self.font.render("press H to retrieve minimized windows", True, palette.black), (10, 40))
-        # if self.event.key_down(p.K_w):
-        #     self.new_window()
-        # if self.event.key_down(p.K_h):
-        #     for i in self.windows:
-        #         i.hidden = False
-        ###
+        if self.event.key_down(p.K_w):
+            linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
 
         linker.refresh()
 

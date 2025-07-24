@@ -1,5 +1,9 @@
 import importlib.util
 
+from . import shortcut
+from . import control
+from . import commands
+
 
 class Default:
     @staticmethod
@@ -10,7 +14,7 @@ class Default:
 class Application:
     def __init__(self, file):
         self.file = file
-        self.windows = []
+        self.root = []
 
 
 data = {"exec0": Application(Default)}
@@ -37,12 +41,29 @@ def start_application(path):
 
 def refresh():
     global application
+
     i = 0
     while i < len(data):
         application = list(data.keys())[i]
         data[application].file.refresh()
+        execute_shortcuts()
+
         if data[application] is None:
             del data[application]
         else:
             i += 1
     application = "exec0"
+
+def execute_shortcuts():
+    for r in data[application].root:
+        for s in r.shortcuts:
+
+            if s == shortcut.USER_QUIT:
+                for e in r.get_events():
+                    if e.type == control.QUIT:
+                        commands.quit()
+
+            if s == shortcut.USER_CLOSE:
+                for e in r.get_events():
+                    if e.type == control.QUIT:
+                        r.destroy()
