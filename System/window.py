@@ -23,11 +23,11 @@ class TitleBar(Object):
 
         self.exit = IconButton((0, 0), (40, self.height), icon.x, (10, 10), 2,
                                palette.light0, palette.red, palette.light1,
-                               icon_hover = palette.white, icon_active = palette.light4)
+                               icon_hover = palette.white, icon_active = palette.light3)
         self.maximize = IconButton((0, 0), (40, self.height), icon.square, (10, 10), 1,
-                                   palette.light0, palette.light2, palette.light1)
+                                   palette.light0, palette.light2, palette.light1, icon_active = palette.light3)
         self.minimize = IconButton((0, 0), (40, self.height), icon.hLine, (10, 10), 1,
-                                   palette.light0, palette.light2, palette.light1)
+                                   palette.light0, palette.light2, palette.light1, icon_active = palette.light3)
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
