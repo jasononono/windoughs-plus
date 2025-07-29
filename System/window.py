@@ -1,6 +1,6 @@
 import pygame as p
 
-from System.templates import Object, Image
+from System.templates import Object, FancyObject, Image
 from System.settings import settings
 from System import icon
 from System.button import IconButton
@@ -98,13 +98,10 @@ class Content(Object):
         parent.display(self.surface, self.rect)
 
 
-class Window(Object):
+class Window(FancyObject):
     def __init__(self, position, size = (400, 300), title = "New Window", title_height = 32, resizable = True):
-        super().__init__(position, (size[0] + 2, size[1] + title_height + 2), True)
-        self.border_colour = palette.light2
-        self.aaStrength = 2
-        self.corner_sequence = []
-        self.get_corner_sequence(settings.borderRadius)
+        super().__init__(position, (size[0] + 2, size[1] + title_height + 2), True,
+                         True, True, settings.cornerRadius, palette.light2)
 
         self.title = title
         self.titleBar = TitleBar((self.rect.width - 2, title_height))
@@ -126,6 +123,9 @@ class Window(Object):
         self.snapped = False
 
         self.events = []
+        self.key = []
+        self.mouse = []
+        self.mousePosition = []
 
     def resize(self, size, content = True):
         size = list(size)
@@ -213,13 +213,14 @@ class Window(Object):
                     self.events.append(control.Event(control.KEYDOWN))
                 if e.type == p.KEYUP:
                     self.events.append(control.Event(control.KEYUP))
+                self.key = system.event.key
             if mouse and not self.hidden:
                 if e.type == p.MOUSEBUTTONUP:
                     self.events.append(control.Event(control.MOUSEBUTTONUP))
                 if e.type == p.MOUSEBUTTONDOWN:
                     self.events.append(control.Event(control.MOUSEBUTTONDOWN))
-
-            ### p.MOUSEMOTION currently unincluded ###
+                self.mouse = system.event.mouse
+        self.mousePosition = [system.event.mousePosition[i] - self.content.rect.abs.topleft[i] for i in range(2)]
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
@@ -234,38 +235,9 @@ class Window(Object):
 
         self.content.refresh(self)
 
-        self.draw_rect(self.border_colour, (0, 0, self.rect.width, self.rect.height), 1)
-        if not self.snapped:
-            self.round_corners()
+
+        self.rounding = not self.snapped
+        self.fancify()
 
         parent.display(self.surface, self.rect)
         return
-
-    def get_corner_sequence(self, radius = 0):
-        self.corner_sequence = []
-        for i in range(radius):
-            self.corner_sequence.append(radius if i >= radius - self.aaStrength else
-                                        round(radius - ((radius - self.aaStrength - i) *
-                                                        (radius - self.aaStrength + i)) ** 0.5))
-
-    def antialias(self, pixel, center, radius):
-        distance = sum([(pixel[i] - center[i]) ** 2 for i in range(2)]) ** 0.5
-        if distance >= radius:
-            alpha = -255 * (distance - radius - self.aaStrength) / self.aaStrength
-            self.surface.set_at(pixel, list(self.border_colour) + [min(255, max(0, alpha))])
-        else:
-            alpha = (distance - radius + self.aaStrength / 2) / self.aaStrength * 2
-            alpha = min(1, max(0, alpha))
-            original = self.surface.get_at(pixel)
-            self.surface.set_at(pixel, [self.border_colour[i] * alpha + original[i] * (1 - alpha) for i in range(3)])
-
-    def round_corners(self):
-        radius = len(self.corner_sequence)
-        width = self.rect.width - radius
-        for i, n in enumerate(self.corner_sequence):
-            for j in range(n):
-                height = self.rect.height - 1 - j
-                self.antialias((radius - i - 1, j), (radius, radius), radius)
-                self.antialias((width + i, j), (width - 1, radius), radius)
-                self.antialias((radius - i - 1, height), (radius, self.rect.height - radius - 1), radius)
-                self.antialias((width + i, height), (width - 1, self.rect.height - radius - 1), radius)

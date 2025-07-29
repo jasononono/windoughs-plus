@@ -2,8 +2,8 @@ from . import linker
 from .surface import RootSurface
 
 
-def new(size):
-    window = RootSurface(linker.application, linker.system.new_window(size = size, resizable = False))
+def new(size, *args, **kwargs):
+    window = RootSurface(linker.application, linker.system.new_window(size = size, *args, **kwargs))
     linker.data[linker.application].root.append(window)
     return window
 

@@ -1,7 +1,6 @@
 import pygame as p
 
 from . import linker
-from . import shortcut
 
 
 class RootSurface(p.Surface):
@@ -27,7 +26,19 @@ class RootSurface(p.Surface):
     def get_events(self):
         return self.window.events
 
+    def get_keys(self):
+        return self.window.key
+
+    def get_mouse(self):
+        return self.window.mouse
+
+    def get_mouse_position(self):
+        return self.window.mousePosition
+
     def use_shortcut(self, name):
         self.shortcuts.append(name)
-        if name == shortcut.USER_RESIZE:
-            self.window.resizable = True
+
+    def set_resizable(self, status = True, min_size = None):
+        self.window.resizable = status
+        if min_size:
+            self.window.minSize = min_size
