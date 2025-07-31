@@ -19,7 +19,7 @@ class System(Object):
 
         self.execute = True
         self.active = None
-        self.title = "Windoughs " + settings.version
+        self.title = "Windoughs+ " + settings.version
         self.cursor = p.SYSTEM_CURSOR_ARROW
 
         self.wallpaper = Image(settings.wallpaper)
@@ -30,6 +30,10 @@ class System(Object):
         linker.system = self
         linker.settings = settings
         linker.user = user
+
+        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
+        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
+        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
 
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)

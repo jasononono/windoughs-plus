@@ -55,6 +55,7 @@ def refresh():
     application = "exec0"
 
 def execute_shortcuts():
+
     for r in data[application].root:
         for s in r.shortcuts:
 
@@ -67,3 +68,13 @@ def execute_shortcuts():
                 for e in r.get_events():
                     if e.type == control.QUIT:
                         r.destroy()
+
+        #r.size = r.window.content.rect.size
+        # NEED TO SET r.size WITHOUT p.transform.scale RETURNING p.Surface
+
+        # method that involves changing the addr
+
+        # window = p.transform.scale(r, r.window.content.rect.size)
+        # root_surface = RootSurface(r.parent, r.window)
+        # root_surface.blit(window, (0, 0))
+        # r = root_surface
