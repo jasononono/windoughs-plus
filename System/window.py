@@ -6,7 +6,6 @@ from System import icon
 from System.button import IconButton
 from System.TextEngine.text import Label
 from System.Assets import palette
-from System.dough import control
 
 
 class TitleBar(Object):
@@ -52,27 +51,23 @@ class TitleBar(Object):
         self.maximize.status = parent.resizable and self.maximize.status
         self.maximize.active = not self.maximize.status
 
-        if self.exit.refresh(system, self):
-            parent.events.append(control.Event(control.QUIT))
+        result = self.exit.refresh(system, self)
 
         if self.maximize.refresh(system, self):
             if parent.snapped:
                 parent.resize(parent.restoredSize)
                 parent.rect.topleft = parent.restoredPosition
                 parent.snapped = False
-                parent.events.append(control.Event(control.MINIMIZE))
             else:
                 parent.restoredSize = (parent.rect.width, parent.rect.height - self.height)
                 parent.restoredPosition = parent.rect.topleft
                 parent.resize([i + 2 for i in system.rect.size], False)
                 parent.rect.topleft = (-1, -1)
                 parent.snapped = True
-                parent.events.append(control.Event(control.MAXIMIZE))
 
         if self.minimize.refresh(system, self):
             parent.hidden = True
             system.active = None
-            parent.events.append(control.Event(control.HIDDEN))
 
         parent.display(self.surface, self.rect)
 
@@ -85,13 +80,13 @@ class TitleBar(Object):
         if system.active is parent and self.dragged:
             parent.rect.topleft = [system.event.mousePosition[i] - self.dragOffset[i] for i in range(2)]
             parent.snapped = False
-            parent.events.append(control.Event(control.MOTION))
+
+        return result
 
 
 class Content(Object):
     def __init__(self, position, size):
         super().__init__(position, size)
-        self.canvas = p.Surface(size)
 
     def refresh(self, parent):
         self.rect.refresh(parent.rect)
@@ -121,11 +116,6 @@ class Window(FancyObject):
         self.restoredPosition = position
         self.hidden = False
         self.snapped = False
-
-        self.events = []
-        self.key = []
-        self.mouse = []
-        self.mousePosition = []
 
     def resize(self, size, content = True):
         size = list(size)
@@ -169,7 +159,6 @@ class Window(FancyObject):
                 self.rect.top != -1 and self.rect.bottom != system.rect.height + 1):
                 self.snapped = False
 
-            self.events.append(control.Event(control.RESIZE))
             return
 
         if self.titleBar.exit.hover or self.titleBar.maximize.hover or self.titleBar.minimize.hover:
@@ -204,40 +193,20 @@ class Window(FancyObject):
                     self.resizeAnchor[1] = self.rect.abs.top
                     self.resizeOffset[1] = system.event.mousePosition[1] - self.rect.abs.bottom
 
-    def refresh_events(self, system):
-        self.events = []
-        mouse = self.content.collidepoint(system.event.mousePosition)
-        for e in system.event.event:
-            if system.active is self:
-                if e.type == p.KEYDOWN:
-                    self.events.append(control.Event(control.KEYDOWN))
-                if e.type == p.KEYUP:
-                    self.events.append(control.Event(control.KEYUP))
-                self.key = system.event.key
-            if mouse and not self.hidden:
-                if e.type == p.MOUSEBUTTONUP:
-                    self.events.append(control.Event(control.MOUSEBUTTONUP))
-                if e.type == p.MOUSEBUTTONDOWN:
-                    self.events.append(control.Event(control.MOUSEBUTTONDOWN))
-                self.mouse = system.event.mouse
-        self.mousePosition = [system.event.mousePosition[i] - self.content.rect.abs.topleft[i] for i in range(2)]
-
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
-        self.refresh_events(system)
 
         if self.hidden:
-            return
+            return False
         if self.resizable:
             self.user_resize(system)
 
-        self.titleBar.refresh(system, self)
+        result = self.titleBar.refresh(system, self)
 
         self.content.refresh(self)
-
 
         self.rounding = not self.snapped
         self.fancify()
 
         parent.display(self.surface, self.rect)
-        return
+        return result

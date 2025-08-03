@@ -4,8 +4,6 @@ from System.templates import Object, Image, Event
 from System.settings import settings, user
 from System.window import Window
 
-from System.dough import linker, control
-
 
 class System(Object):
     def __init__(self, size = (800, 600)):
@@ -26,14 +24,6 @@ class System(Object):
         self.load_wallpaper()
 
         self.windows = []
-
-        linker.system = self
-        linker.settings = settings
-        linker.user = user
-
-        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
-        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
-        linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/DefaultApp.dough")
 
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
@@ -77,14 +67,10 @@ class System(Object):
 
     def activate_window(self, window = None):
         if window:
-            if self.active is not window:
-                window.events.append(control.Event(control.ACTIVE))
             self.active = window
             self.windows.remove(window)
             self.windows.append(window)
         else:
-            if self.active:
-                self.active.events.append(control.Event(control.INACTIVE))
             self.active = None
 
     def refresh(self):
@@ -96,15 +82,14 @@ class System(Object):
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
 
         if self.event.key_down(p.K_w):
-            linker.start_application("/Users/jason/Documents/CS/windoughs+/Storage/Applications/FileExplorer.dough")
-
-        linker.refresh()
+            self.new_window(size = (400, 300))
 
         mouse_down = self.event.mouse_down()
         bring_to_front = None
         i = 0
         while i < len(self.windows):
-            self.windows[i].refresh(self, self)
+            if self.windows[i].refresh(self, self):
+                self.destroy_window(self.windows[i])
             if (mouse_down and not self.windows[i].hidden and
                 (self.windows[i].collidepoint(self.event.mousePosition) or self.windows[i].resizing)):
                 bring_to_front = self.windows[i]

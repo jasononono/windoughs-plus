@@ -3,7 +3,6 @@ requirement.dependency_check()
 
 
 import pygame as p
-import math
 from System.settings import settings
 from System.system import System
 
@@ -27,5 +26,6 @@ while system.execute:
     # if clock.get_fps() != 0:
     #     fps = math.log(60, 2) - math.log(clock.get_fps(), 2)
     #     print(str(max(0, round((1 - 0.1 ** fps) * 100))) + "%")
+    print(clock.get_fps())
 
 p.quit()
