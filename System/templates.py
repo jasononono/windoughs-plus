@@ -154,10 +154,10 @@ class Event:
         self.mousePosition = None
 
     def refresh(self):
-        self.event = p.event.get()
-        self.key = p.key.get_pressed()
-        self.mouse = p.mouse.get_pressed()
-        self.mousePosition = p.mouse.get_pos()
+        self.event = []
+        self.key = []
+        self.mouse = []
+        self.mousePosition = []
 
     def detect(self, event):
         for e in self.event:

@@ -1,16 +1,8 @@
-import System.dough as d
-
-
 class Root:
-    def __init__(self):
-        self.surface = d.new((400, 300))
-        self.surface.use_shortcut(d.shortcut.USER_QUIT)
-        self.surface.set_title("Application")
+    def __init__(self, system):
+        self.system = system
+        self.window = system.new_window(size = (400, 300))
+        self.window.content.draw_rect((255, 255, 255), (10, 10, 20, 30))
 
     def refresh(self):
-        pass
-
-
-root = Root()
-def refresh():
-    root.refresh()
+        return

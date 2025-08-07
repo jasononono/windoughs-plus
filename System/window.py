@@ -1,6 +1,6 @@
 import pygame as p
 
-from System.templates import Object, FancyObject, Image
+from System.templates import Object, FancyObject, Image, Event
 from System.settings import settings
 from System import icon
 from System.button import IconButton
@@ -117,6 +117,8 @@ class Window(FancyObject):
         self.hidden = False
         self.snapped = False
 
+        self.event = Event()
+
     def resize(self, size, content = True):
         size = list(size)
         if content:
@@ -195,6 +197,7 @@ class Window(FancyObject):
 
     def refresh(self, system, parent):
         self.rect.refresh(parent.rect)
+        self.event.refresh()
 
         if self.hidden:
             return False
@@ -202,8 +205,6 @@ class Window(FancyObject):
             self.user_resize(system)
 
         result = self.titleBar.refresh(system, self)
-
-        self.content.refresh(self)
 
         self.rounding = not self.snapped
         self.fancify()

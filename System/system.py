@@ -1,4 +1,5 @@
 import pygame as p
+import importlib.util
 
 from System.templates import Object, Image, Event
 from System.settings import settings, user
@@ -24,6 +25,7 @@ class System(Object):
         self.load_wallpaper()
 
         self.windows = []
+        self.applications = {}
 
     def resize(self, size):
         self.surface = p.display.set_mode(size, p.SCALED, vsync = True)
@@ -73,8 +75,23 @@ class System(Object):
         else:
             self.active = None
 
+    def open_application(self, path):
+        index = 0
+        while "exec" + str(index) in self.applications.keys():
+            index += 1
+        name = "exec" + str(index)
+        module_spec = importlib.util.spec_from_file_location(name, path + "/__init__.py")
+        file = importlib.util.module_from_spec(module_spec)
+
+        module_spec.loader.exec_module(file)
+        self.applications[name] = file.Root(self)
+
     def refresh(self):
-        self.event.refresh()
+        self.event.event = p.event.get()
+        self.event.key = p.key.get_pressed()
+        self.event.mouse = p.mouse.get_pressed()
+        self.event.mousePosition = p.mouse.get_pos()
+
         self.cursor = p.SYSTEM_CURSOR_ARROW
         if self.event.detect(p.QUIT):
             self.execute = False
@@ -82,7 +99,7 @@ class System(Object):
         self.display(self.wallpaper.surface, [self.rect.center[i] - self.wallpaper.size[i] / 2 for i in range(2)])
 
         if self.event.key_down(p.K_w):
-            self.new_window(size = (400, 300))
+            self.open_application("Storage/Applications/DefaultApp.dough")
 
         mouse_down = self.event.mouse_down()
         bring_to_front = None
@@ -96,3 +113,9 @@ class System(Object):
             i += 1
         if mouse_down:
             self.activate_window(bring_to_front)
+
+        for i in self.applications.values():
+            i.refresh()
+
+        for i in self.windows:
+            i.content.refresh(i)
